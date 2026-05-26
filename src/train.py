@@ -1,21 +1,29 @@
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from src.model import build_lstm
+import os
 
 
-def train_model(X_train, y_train, model_path: str, epochs=50, batch_size=32):
+def train_model(X_train, y_train, ticker: str,
+                models_dir: str = 'models',
+                epochs: int = 50, batch_size: int = 32):
     """
-    Train LSTM model with callbacks.
-    
+    Train LSTM model for a specific ticker.
+    Saves model as {ticker}_model.keras
+
     Args:
         X_train    : training sequences
         y_train    : training targets
-        model_path : where to save the best model
+        ticker     : stock symbol e.g. 'AAPL'
+        models_dir : directory to save model
         epochs     : max training epochs
         batch_size : samples per gradient update
-    
+
     Returns:
         model, history
     """
+    os.makedirs(models_dir, exist_ok=True)
+    model_path = os.path.join(models_dir, f"{ticker}_model.keras")
+
     model = build_lstm(input_shape=(X_train.shape[1], 1))
 
     callbacks = [
@@ -42,5 +50,5 @@ def train_model(X_train, y_train, model_path: str, epochs=50, batch_size=32):
         verbose=1
     )
 
-    print(f"Model saved to {model_path} ✅")
+    print(f"Model saved → {model_path} ✅")
     return model, history

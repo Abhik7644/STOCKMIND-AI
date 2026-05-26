@@ -50,35 +50,31 @@ def reshape_for_lstm(X):
     return X.reshape((X.shape[0], X.shape[1], 1))
 
 
-def preprocess_pipeline(df, window_size=60, split_ratio=0.80,
-                         scaler_path=None, save_dir=None):
+def preprocess_pipeline(df, ticker: str, window_size=60,
+                         split_ratio=0.80, models_dir='models',
+                         save_dir=None):
     """
-    Full preprocessing pipeline in one call.
-    Runs: normalize → sequences → split → reshape → save
+    Full preprocessing pipeline for a specific ticker.
+    Saves scaler as {ticker}_scaler.pkl
     """
-    # Extract close prices
+    import os
+    os.makedirs(models_dir, exist_ok=True)
+    scaler_path = os.path.join(models_dir, f"{ticker}_scaler.pkl")
+
     data = df[['Close']].values
 
-    # Normalize
     scaled, scaler = normalize(data, scaler_path)
-
-    # Sequences
-    X, y = create_sequences(scaled, window_size)
-
-    # Split
+    X, y           = create_sequences(scaled, window_size)
     X_train, X_test, y_train, y_test = split_data(X, y, split_ratio)
-
-    # Reshape
     X_train = reshape_for_lstm(X_train)
     X_test  = reshape_for_lstm(X_test)
 
-    # Save
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
-        np.save(f"{save_dir}/X_train.npy", X_train)
-        np.save(f"{save_dir}/X_test.npy",  X_test)
-        np.save(f"{save_dir}/y_train.npy", y_train)
-        np.save(f"{save_dir}/y_test.npy",  y_test)
+        np.save(f"{save_dir}/{ticker}_X_train.npy", X_train)
+        np.save(f"{save_dir}/{ticker}_X_test.npy",  X_test)
+        np.save(f"{save_dir}/{ticker}_y_train.npy", y_train)
+        np.save(f"{save_dir}/{ticker}_y_test.npy",  y_test)
         print(f"Arrays saved to {save_dir} ✅")
 
     print(f"X_train: {X_train.shape} | X_test: {X_test.shape}")
