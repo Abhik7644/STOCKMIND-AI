@@ -7,6 +7,18 @@ import yfinance as yf
 import pandas as pd
 import os
 
+from src.alpha_vantage import (
+    get_stock_insight,
+    get_company_overview,
+    get_cached_or_fetch,
+    get_rsi,
+    get_macd
+)
+from src.database import get_db
+from sqlmodel import Session
+from fastapi import Depends
+
+
 # ── Database + Auth imports ──────────────────────────────
 from src.database import create_db_tables
 from src.auth.router import router as auth_router
@@ -252,3 +264,102 @@ def compare(
             results.append({"ticker": ticker, "error": str(e)})
 
     return {"comparisons": results}
+
+# ── 5. Stock Insights (RSI + MACD) ────────────────────────
+@app.get("/api/insights/{ticker}")
+def stock_insights(
+    ticker: str,
+    db    : Session = Depends(get_db)
+):
+    """
+    Get RSI + MACD signals for a ticker.
+    Cached for 24 hours to respect API limits.
+    """
+    ticker = ticker.upper()
+
+    insight = get_cached_or_fetch(
+        ticker    = ticker,
+        data_type = "insight",
+        fetch_fn  = get_stock_insight,
+        db        = db
+    )
+
+    return insight
+
+
+# ── 6. Company Overview ───────────────────────────────────
+@app.get("/api/overview/{ticker}")
+def company_overview(
+    ticker: str,
+    db    : Session = Depends(get_db)
+):
+    """
+    Get company fundamentals.
+    Cached for 24 hours.
+    """
+    ticker = ticker.upper()
+
+    overview = get_cached_or_fetch(
+        ticker    = ticker,
+        data_type = "overview",
+        fetch_fn  = get_company_overview,
+        db        = db
+    )
+
+    return overview
+
+
+# ── 7. Top movers from pre-trained stocks ─────────────────
+@app.get("/api/top-movers")
+def top_movers():
+    """
+    Run predictions on all pre-trained stocks.
+    Return ranked by predicted % change.
+    """
+    PRETRAINED = [
+        'AAPL', 'MSFT', 'GOOGL', 'TSLA',
+        'AMZN', 'NVDA', 'META', 'NFLX',
+        'AMD',  'JPM'
+    ]
+
+    results = []
+
+    for ticker in PRETRAINED:
+        try:
+            if not model_exists(ticker, MODELS_DIR):
+                continue
+
+            model, scaler = load_model_and_scaler(ticker, MODELS_DIR)
+            sequence, closes = get_latest_data(ticker)
+
+            if sequence is None:
+                continue
+
+            pred_scaled   = model.predict(sequence, verbose=0)
+            pred_price    = float(scaler.inverse_transform(pred_scaled)[0][0])
+            current_price = float(closes[-1][0])
+            change_pct    = ((pred_price - current_price) / current_price) * 100
+
+            results.append({
+                "ticker"         : ticker,
+                "current_price"  : round(current_price, 2),
+                "predicted_price": round(pred_price, 2),
+                "change_pct"     : round(change_pct, 2)
+            })
+
+        except Exception as e:
+            print(f"Skipping {ticker}: {e}")
+            continue
+
+    # Sort by predicted change
+    gainers = sorted(results,
+                     key=lambda x: x["change_pct"],
+                     reverse=True)[:3]
+    losers  = sorted(results,
+                     key=lambda x: x["change_pct"])[:3]
+
+    return {
+        "top_gainers": gainers,
+        "top_losers" : losers,
+        "all"        : results
+    }

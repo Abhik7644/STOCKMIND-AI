@@ -5,20 +5,21 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./stockmind.db")
 
-engine = create_engine(DATABASE_URL, echo=False)
+# SQLite needs this extra argument
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
 
 
 def create_db_tables():
-    """Create all tables on startup."""
     SQLModel.metadata.create_all(engine)
+    print("Database tables created ✅")
 
 
 def get_db() -> Generator:
-    """
-    Dependency — gives each request its own session.
-    Automatically closes when request is done.
-    """
     with Session(engine) as session:
         yield session

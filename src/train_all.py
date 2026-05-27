@@ -25,7 +25,7 @@ TICKERS = [
 MODELS_DIR = 'models'
 DATA_DIR   = 'data'
 START      = '2019-01-01'
-END        = '2024-01-01'
+END        = '2026-01-01'
 
 
 def train_ticker(ticker: str):
