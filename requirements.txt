@@ -8,3 +8,5 @@ jupyter
 fastapi
 alpha_vantage
 uvicorn
+sqlmodel
+python-dotenv
