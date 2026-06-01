@@ -1,41 +1,48 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000';
-
-export const getHealth = () =>
-    axios.get(`${BASE_URL}/api/health`);
-
-export const getPrediction = (ticker) =>
-    axios.get(`${BASE_URL}/api/predict?ticker=${ticker}`);
-
-export const getHistory = (ticker, days = 90) =>
-    axios.get(`${BASE_URL}/api/history?ticker=${ticker}&days=${days}`);
-
-export const getComparison = (tickers) =>
-    axios.get(`${BASE_URL}/api/compare?tickers=${tickers.join(',')}`);
-
-import axios from 'axios';
-
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
-export const getHealth      = () =>
-    axios.get(`${BASE_URL}/api/health`);
+const api = axios.create({ baseURL: BASE_URL });
 
-export const getPrediction  = (ticker) =>
-    axios.get(`${BASE_URL}/api/predict?ticker=${ticker}`);
+// Auto-attach token to every request
+api.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('token');
+  if (token) cfg.headers.Authorization = `Bearer ${token}`;
+  return cfg;
+});
 
-export const getHistory     = (ticker, days = 90) =>
-    axios.get(`${BASE_URL}/api/history?ticker=${ticker}&days=${days}`);
+// ── Predictions ───────────────────────────────────────────
+export const getPrediction  = (ticker) => api.get(`/api/predict?ticker=${ticker}`);
+export const getHistory     = (ticker, days = 90) => api.get(`/api/history?ticker=${ticker}&days=${days}`);
+export const getComparison  = (tickers) => api.get(`/api/compare?tickers=${tickers.join(',')}`);
+export const getTopMovers   = () => api.get('/api/top-movers');
 
-export const getComparison  = (tickers) =>
-    axios.get(`${BASE_URL}/api/compare?tickers=${tickers.join(',')}`);
+// ── Alpha Vantage ─────────────────────────────────────────
+export const getInsights    = (ticker) => api.get(`/api/insights/${ticker}`);
+export const getOverview    = (ticker) => api.get(`/api/overview/${ticker}`);
 
-// ── New Alpha Vantage endpoints ──────────────────────────
-export const getInsights    = (ticker) =>
-    axios.get(`${BASE_URL}/api/insights/${ticker}`);
+// ── Auth ──────────────────────────────────────────────────
+export const loginUser      = (email, password) =>
+  api.post('/api/auth/login', { email, password });
 
-export const getOverview    = (ticker) =>
-    axios.get(`${BASE_URL}/api/overview/${ticker}`);
+export const registerUser   = (email, username, password) =>
+  api.post('/api/auth/register', { email, username, password });
 
-export const getTopMovers   = () =>
-    axios.get(`${BASE_URL}/api/top-movers`);
+export const getProfile     = () => api.get('/api/auth/me');
+
+// ── Watchlist ─────────────────────────────────────────────
+export const getWatchlist   = () => api.get('/api/auth/watchlist');
+export const addWatchlist   = (ticker) =>
+  api.post('/api/auth/watchlist', { ticker });
+export const removeWatchlist = (ticker) =>
+  api.delete(`/api/auth/watchlist/${ticker}`);
+
+// ── Trades ────────────────────────────────────────────────
+export const getTrades      = () => api.get('/api/auth/trades');
+export const executeTrade   = (ticker, action, shares) =>
+  api.post('/api/auth/trade', { ticker, action, shares });
+
+// ── History ───────────────────────────────────────────────
+export const getSearchHistory = () => api.get('/api/auth/history');
+
+export default api;

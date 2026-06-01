@@ -1,0 +1,164 @@
+.page { min-height: 100vh; background: var(--bg-base); }
+.body {
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--text-secondary);
+}
+
+.balanceCard {
+  background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.1));
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  text-align: center;
+}
+.balanceLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+.balanceValue {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+.balanceSub {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.tradeCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+.tradeTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+.tradeForm { display: flex; flex-direction: column; gap: 1rem; }
+.tradeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+.field input, .field select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.estTotal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.success {
+  background: var(--green-dim);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+}
+.error {
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+}
+
+.tradeBtn {
+  padding: 0.75rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.buyBtn  { background: var(--green); color: white; }
+.buyBtn:hover  { background: #059669; }
+.sellBtn { background: var(--red); color: white; }
+.sellBtn:hover { background: #dc2626; }
+.tradeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.histCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+.histTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.empty { color: var(--text-secondary); font-size: 0.875rem; text-align: center; padding: 2rem; }
+
+.table { display: flex; flex-direction: column; gap: 0; }
+.tableHead {
+  display: grid;
+  grid-template-columns: 80px 80px 70px 80px 90px 1fr;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+}
+.tableRow {
+  display: grid;
+  grid-template-columns: 80px 80px 70px 80px 90px 1fr;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  align-items: center;
+  transition: background 0.1s;
+}
+.tableRow:hover { background: var(--bg-hover); }
+.rowTicker { font-family: var(--font-display); font-weight: 700; }
+.rowDate   { color: var(--text-secondary); font-size: 0.78rem; }
+.green { color: var(--green); display: flex; align-items: center; gap: 3px; font-weight: 600; }
+.red   { color: var(--red);   display: flex; align-items: center; gap: 3px; font-weight: 600; }
