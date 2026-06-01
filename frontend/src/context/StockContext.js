@@ -15,9 +15,13 @@ export function StockProvider({ children }) {
   const [error,        setError]        = useState(null);
 
   const fetchStock = useCallback(async (ticker) => {
+    // Don't refetch if same ticker already loaded
+    if (ticker === activeTicker && prediction) return;
+
     setLoading(true);
     setError(null);
     setActiveTicker(ticker);
+
     try {
       const [predRes, histRes, insightRes, overviewRes] = await Promise.all([
         getPrediction(ticker),
@@ -30,7 +34,6 @@ export function StockProvider({ children }) {
       setInsight(insightRes.data);
       setOverview(overviewRes.data);
 
-      // Format chart data
       const chartData = histRes.data.dates.map((date, i) => ({
         date,
         price: histRes.data.prices[i]
@@ -48,7 +51,8 @@ export function StockProvider({ children }) {
       setError(`Could not load data for ${ticker}`);
     }
     setLoading(false);
-  }, []);
+  }, [activeTicker, prediction]);
+
 
   const fetchTopMovers = useCallback(async () => {
     try {
@@ -56,6 +60,7 @@ export function StockProvider({ children }) {
       setTopMovers(res.data);
     } catch (_) {}
   }, []);
+
 
   return (
     <StockContext.Provider value={{

@@ -381,13 +381,17 @@ Optimizer: Adam | Loss: Mean Squared Error
 
 ## 📱 Screenshots
 
-> Dashboard — Prediction card, RSI insight, company overview, top movers
+### Login Page
+![Login Page](assets/login_page.png)
 
-> AI Predictions — Full market scan across all 10 stocks
+### Dashboard
+![Dashboard](assets/dashboard.png)
 
-> Portfolio — Paper trading with trade history and balance
+### AI Predictions — Full Market Scan
+![All Stocks](assets/all_stocks.png)
 
-> Login — Register / login with animated grid background
+### Paper Trading & Portfolio
+![Paper Trading](assets/Paper_trading.png)
 
 ---
 

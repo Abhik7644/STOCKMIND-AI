@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStock }            from '../context/StockContext';
 import { useAuth }             from '../context/AuthContext';
-import { addWatchlist, getTrades } from '../api';
+import { addWatchlist } from '../api';
 import {
   AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer
@@ -89,10 +89,13 @@ export default function Dashboard() {
   const [watchlisted, setWatchlisted] = useState(false);
   const [starLoading, setStarLoading] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
+  if (!prediction) {
     fetchStock('AAPL');
-    fetchTopMovers();
-  }, []);
+  }
+  fetchTopMovers();
+}, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const handleWatchlist = async () => {
     if (!token) return;

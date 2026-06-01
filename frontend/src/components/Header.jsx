@@ -11,15 +11,15 @@ export default function Header({ title }) {
   const navigate                = useNavigate();
 
   const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    const ticker = query.trim().toUpperCase();
-    setQuery('');
-    setTraining(true);
-    await fetchStock(ticker);
-    setTraining(false);
-    navigate('/predictions');
-  };
+  e.preventDefault();
+  if (!query.trim()) return;
+  const ticker = query.trim().toUpperCase();
+  setQuery('');
+  setTraining(true);
+  await fetchStock(ticker);   // fetch first
+  setTraining(false);
+  navigate('/predictions');   // then navigate
+};
 
   return (
     <header className={styles.header}>
