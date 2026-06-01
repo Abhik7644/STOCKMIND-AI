@@ -6,6 +6,7 @@ Takes ~15-20 minutes total.
 from src.data_loader  import fetch_stock_data
 from src.preprocessor import preprocess_pipeline
 from src.train        import train_model
+from datetime import datetime, timedelta
 import os
 
 # Top 10 stocks to pre-train
@@ -24,8 +25,8 @@ TICKERS = [
 
 MODELS_DIR = 'models'
 DATA_DIR   = 'data'
-START      = '2019-01-01'
-END        = '2026-01-01'
+START      = '2020-01-01'
+END        = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
 
 def train_ticker(ticker: str):

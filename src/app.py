@@ -2,17 +2,20 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+from datetime import datetime, timedelta
 import numpy as np
 import yfinance as yf
 import pandas as pd
 import os
 
 from src.alpha_vantage import (
+    get_recommendation,
     get_stock_insight,
     get_company_overview,
     get_cached_or_fetch,
     get_rsi,
-    get_macd
+    get_macd,
+    get_news_sentiment
 )
 from src.database import get_db
 from sqlmodel import Session
@@ -115,11 +118,11 @@ def ensure_model_exists(ticker: str):
         return 'pretrained'
 
     print(f"No model for {ticker} — training on demand...")
-
+    end = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
     df = fetch_stock_data(
         ticker,
-        start='2019-01-01',
-        end='2024-01-01',
+        start='2020-01-01',
+        end=end,
         save_path=os.path.join(DATA_DIR, f"{ticker}_raw.csv")
     )
 
@@ -152,8 +155,7 @@ def health():
 # ── 2. Predict next day price ─────────────────────────────
 @app.get("/api/predict", response_model=PredictionResponse)
 def predict(
-    ticker: str = Query(default="AAPL",
-                        description="Stock ticker e.g. AAPL")
+    ticker: str = Query(default="AAPL")
 ):
     """
     Predict next trading day closing price.
@@ -167,12 +169,18 @@ def predict(
     # Load this ticker's model + scaler
     model, scaler = load_model_and_scaler(ticker, MODELS_DIR)
 
-    sequence, closes = get_latest_data(ticker)
-    if sequence is None:
+    df = yf.download(ticker, period="6mo", progress=False)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    
+    if df.empty or len(df) < 60:
         raise HTTPException(
             status_code=400,
             detail=f"Not enough data for '{ticker}'"
         )
+    closes = df['Close'].values.reshape(-1, 1)
+    closes_scaled = scaler.transform(closes)
+    sequence = closes_scaled[-60:].reshape(1, 60, 1)
 
     pred_scaled   = model.predict(sequence, verbose=0)
     pred_price    = float(scaler.inverse_transform(pred_scaled)[0][0])
@@ -189,6 +197,37 @@ def predict(
         "model_status"    : model_status
     }
 
+@app.get("/api/recommendation/{ticker}")
+def recommendation(ticker: str, db: Session = Depends(get_db)):
+    """Get BUY / WAIT / HIGH RISK recommendation."""
+    ticker = ticker.upper()
+    ensure_model_exists(ticker)
+    model, scaler = load_model_and_scaler(ticker, MODELS_DIR)
+    sequence, closes = get_latest_data(ticker)
+
+    pred_scaled   = model.predict(sequence, verbose=0)
+    pred_price    = float(scaler.inverse_transform(pred_scaled)[0][0])
+    current_price = float(closes[-1][0])
+    change_pct    = ((pred_price - current_price) / current_price) * 100
+
+    prediction = {"change_pct": round(change_pct, 2)}
+
+    insight = get_cached_or_fetch(
+        ticker=ticker, data_type="insight",
+        fetch_fn=get_stock_insight, db=db
+    )
+
+    return get_recommendation(ticker, prediction, insight)
+
+@app.get("/api/news/{ticker}")
+def news(ticker: str, db: Session = Depends(get_db)):
+    """Get news with sentiment for a ticker."""
+    return get_cached_or_fetch(
+        ticker=ticker.upper(),
+        data_type="news",
+        fetch_fn=get_news_sentiment,
+        db=db
+    )
 
 # ── 3. Historical prices + prediction ─────────────────────
 @app.get("/api/history", response_model=HistoryResponse)

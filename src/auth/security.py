@@ -14,20 +14,20 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    """Hash a plain password — never store plain text."""
-    return pwd_context.hash(password)
+    """Hash password — truncate to 72 bytes (bcrypt limit)."""
+    # bcrypt has a 72 byte limit — truncate safely
+    password_bytes = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    return pwd_context.hash(password_bytes)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Check if plain password matches stored hash."""
-    return pwd_context.verify(plain, hashed)
+    """Verify password against hash."""
+    plain_bytes = plain.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    return pwd_context.verify(plain_bytes, hashed)
 
 
 def create_access_token(data: dict) -> str:
-    """
-    Create a JWT token.
-    Contains user id + expiry time.
-    """
+    """Create JWT token with expiry."""
     to_encode = data.copy()
     expire    = datetime.utcnow() + timedelta(minutes=EXPIRE_MIN)
     to_encode.update({"exp": expire})
@@ -35,9 +35,10 @@ def create_access_token(data: dict) -> str:
 
 
 def decode_token(token: str) -> dict | None:
-    """Decode and verify a JWT token."""
+    """Decode and verify JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
         return None
+    

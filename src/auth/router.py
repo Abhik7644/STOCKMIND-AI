@@ -28,12 +28,15 @@ def get_current_user(
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    user = crud.get_user_by_id(db, user_id=payload.get("sub"))
-    if not user:
+    user_id = payload.get("sub")
+    if not user_id:
         raise HTTPException(
             status_code=404,
-            detail="User not found"
+            detail="Invalid token"
         )
+    user = crud.get_user_by_id(db, user_id=int(user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
@@ -54,7 +57,7 @@ def register(
         request.username,
         request.password
     )
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -71,7 +74,7 @@ def login(
             status_code=401,
             detail="Invalid email or password"
         )
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 

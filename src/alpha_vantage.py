@@ -224,3 +224,110 @@ def get_cached_or_fetch(ticker: str, data_type: str,
     db.commit()
 
     return fresh_data
+
+def get_recommendation(ticker: str, prediction: dict, insight: dict) -> dict:
+    """
+    Generate BUY / WAIT / HIGH RISK recommendation
+    using weighted scoring like the PPT describes.
+    
+    Weights: Model 45% + Momentum (RSI) 35% + Risk 20%
+    """
+    score = 0
+
+    # Model score (45%) — is predicted price higher?
+    change_pct = prediction.get('change_pct', 0)
+    if change_pct > 2:
+        model_score = 1.0
+    elif change_pct > 0:
+        model_score = 0.6
+    elif change_pct > -2:
+        model_score = 0.3
+    else:
+        model_score = 0.0
+    score += model_score * 0.45
+
+    # Momentum score (35%) — RSI signal
+    rsi = insight.get('rsi', {})
+    rsi_val = rsi.get('rsi', 50)
+    if rsi_val < 30:
+        momentum_score = 1.0   # oversold = bullish
+    elif rsi_val < 50:
+        momentum_score = 0.65
+    elif rsi_val < 70:
+        momentum_score = 0.35
+    else:
+        momentum_score = 0.1   # overbought = bearish
+    score += momentum_score * 0.35
+
+    # Risk score (20%) — how volatile is the move?
+    if abs(change_pct) > 10:
+        risk_score = 0.1   # too volatile = high risk
+    elif abs(change_pct) > 5:
+        risk_score = 0.5
+    else:
+        risk_score = 1.0
+    score += risk_score * 0.20
+
+    # Final recommendation
+    confidence = round(score * 100, 1)
+
+    if score >= 0.65:
+        recommendation = "BUY"
+        color = "green"
+        reasoning = f"AI model predicts {change_pct}% movement with bullish momentum indicators"
+    elif score >= 0.40:
+        recommendation = "WAIT"
+        color = "yellow"
+        reasoning = "Mixed signals — monitor for a clearer trend before acting"
+    else:
+        recommendation = "HIGH RISK"
+        color = "red"
+        reasoning = "Bearish indicators suggest caution — avoid or reduce exposure"
+
+    return {
+        "ticker"        : ticker,
+        "recommendation": recommendation,
+        "confidence"    : confidence,
+        "color"         : color,
+        "reasoning"     : reasoning,
+        "scores": {
+            "model"   : round(model_score * 100),
+            "momentum": round(momentum_score * 100),
+            "risk"    : round(risk_score * 100)
+        }
+    }
+
+def get_news_sentiment(ticker: str) -> dict:
+    """Fetch news with bullish/bearish sentiment tags."""
+    data = fetch_av({
+        "function": "NEWS_SENTIMENT",
+        "tickers" : ticker,
+        "limit"   : 5
+    })
+
+    if "feed" not in data:
+        return {"ticker": ticker, "news": []}
+
+    news = []
+    for item in data["feed"][:5]:
+        # Get sentiment for this specific ticker
+        ticker_sentiment = "Neutral"
+        for ts in item.get("ticker_sentiment", []):
+            if ts.get("ticker") == ticker:
+                score = float(ts.get("ticker_sentiment_score", 0))
+                if score > 0.15:
+                    ticker_sentiment = "Bullish 📈"
+                elif score < -0.15:
+                    ticker_sentiment = "Bearish 📉"
+                break
+
+        news.append({
+            "title"    : item.get("title", ""),
+            "summary"  : item.get("summary", "")[:150] + "...",
+            "url"      : item.get("url", ""),
+            "source"   : item.get("source", ""),
+            "sentiment": ticker_sentiment,
+            "time"     : item.get("time_published", "")[:8]
+        })
+
+    return {"ticker": ticker, "news": news}
