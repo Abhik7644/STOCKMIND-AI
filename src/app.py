@@ -143,7 +143,16 @@ def ensure_model_exists(ticker: str):
 #  ROUTES
 # ════════════════════════════════════════════════════════
 
-# ── 1. Health check ───────────────────────────────────────
+# ── 1. Health check 
+# ───────────────────────────────────────
+
+@app.get("/")
+def root():
+    return {
+        "message": "StockMind AI API is running",
+        "status": "success"
+    }
+
 @app.get("/api/health", response_model=HealthResponse)
 def health():
     return {
