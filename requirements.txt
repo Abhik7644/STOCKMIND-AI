@@ -9,3 +9,5 @@ alpha_vantage
 uvicorn
 sqlmodel
 python-dotenv
+passlib[bcrypt]
+bcrypt
