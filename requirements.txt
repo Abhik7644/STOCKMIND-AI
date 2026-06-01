@@ -5,3 +5,6 @@ scikit-learn
 tensorflow
 yfinance
 jupyter
+fastapi
+alpha_vantage
+uvicorn

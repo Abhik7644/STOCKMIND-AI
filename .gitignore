@@ -3,6 +3,6 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 data/
-models/
+#models/
 .env
 *.csv
