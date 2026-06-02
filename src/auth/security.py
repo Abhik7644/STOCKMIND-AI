@@ -6,28 +6,31 @@ import os
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
+SECRET_KEY = os.getenv("SECRET_KEY", "stockmind-fallback-key-2024")
 ALGORITHM  = os.getenv("ALGORITHM", "HS256")
 EXPIRE_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 1440))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12
+)
 
 
 def hash_password(password: str) -> str:
-    """Hash password — truncate to 72 bytes (bcrypt limit)."""
-    # bcrypt has a 72 byte limit — truncate safely
-    password_bytes = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(password_bytes)
+    truncated = password.encode("utf-8")[:72]
+    return pwd_context.hash(truncated)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Verify password against hash."""
-    plain_bytes = plain.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.verify(plain_bytes, hashed)
+    truncated = plain.encode("utf-8")[:72]
+    try:
+        return pwd_context.verify(truncated, hashed)
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict) -> str:
-    """Create JWT token with expiry."""
     to_encode = data.copy()
     expire    = datetime.utcnow() + timedelta(minutes=EXPIRE_MIN)
     to_encode.update({"exp": expire})
@@ -35,10 +38,11 @@ def create_access_token(data: dict) -> str:
 
 
 def decode_token(token: str) -> dict | None:
-    """Decode and verify JWT token."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        return jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
     except JWTError:
         return None
-    
