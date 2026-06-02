@@ -12,11 +12,11 @@
 
 ## 🔗 Live Demo
 
-|              | Link                                        |
-| ------------ | ------------------------------------------- |
-| **Frontend** | `https://stockmind-ai.vercel.app`           |
-| **API Docs** | `https://stockmind-api.onrender.com/docs`   |
-| **GitHub**   | `https://github.com/Abhik7644/STOCKMIND-AI` |
+| | Link |
+|---|---|
+| **Frontend** | https://stockmind-lnar31kwz-abhik7644s-projects.vercel.app |
+| **API Docs** | https://stockmind-api-production-d1d6.up.railway.app/docs |
+| **GitHub**   | https://github.com/Abhik7644/STOCKMIND-AI ||
 
 ---
 
